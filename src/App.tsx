@@ -1,285 +1,361 @@
-import React from 'react';
-import { 
-  CuisineType, 
-  DietaryRestriction, 
-  GroceryCategory, 
-  PlannedMeal, 
-  Recipe, 
-  UserPreferences 
-} from './types';
-import { INITIAL_RECIPES } from './data/recipes';
-import { 
-  consolidateGroceryList, 
-  generateDefaultPlan, 
-  calculatePlanStats 
-} from './utils/planner';
-
-import { Header } from './components/Header';
-import { ProfileBar } from './components/ProfileBar';
-import { ProfileModal } from './components/ProfileModal';
+import React, { useState, useMemo } from 'react';
+import { Navbar } from './components/Navbar';
 import { MealPlanner } from './components/MealPlanner';
-import { GroceryCart } from './components/GroceryCart';
-import { RecipeBox } from './components/RecipeBox';
-import { WasteAndBudgetPanel } from './components/WasteAndBudgetPanel';
-import { RecipeModal } from './components/RecipeModal';
-import { SwapRecipeModal } from './components/SwapRecipeModal';
-import { AddRecipeModal } from './components/AddRecipeModal';
-import { AssignMealModal } from './components/AssignMealModal';
+import { SmartCart } from './components/SmartCart';
+import { PantryManager } from './components/PantryManager';
+import { CanvasInsightsModal } from './components/CanvasInsightsModal';
+import { RecipeUploadModal } from './components/RecipeUploadModal';
+import { PreferencesModal } from './components/PreferencesModal';
+import { PartnerCheckoutModal } from './components/PartnerCheckoutModal';
+import { MealDbExplorerModal } from './components/MealDbExplorerModal';
+import { GROCERY_PARTNERS, INITIAL_PANTRY, INITIAL_RECIPES } from './data/initialData';
+import { Recipe, PantryItem, UserPreferences, ConsolidatedCartItem } from './types';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function App() {
-  const [preferences, setPreferences] = React.useState<UserPreferences>({
+  const [recipes, setRecipes] = useState<Recipe[]>(INITIAL_RECIPES);
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>(INITIAL_PANTRY);
+  const [activeTab, setActiveTab] = useState<'planner' | 'cart' | 'pantry' | 'canvas'>('planner');
+
+  const [preferences, setPreferences] = useState<UserPreferences>({
     pax: 2,
-    plannedDays: 5,
-    weeklyBudget: 120,
-    cuisines: ['Asian', 'Mediterranean', 'Italian'],
-    dietary: ['High-Protein', 'Quick Prep (<30 min)'],
-    preferredGrocer: 'RedMart',
-    deliveryType: 'scheduled',
+    days: 5,
+    budget: 90,
+    currency: 'SGD',
+    cuisines: ['Asian Comfort', 'Mediterranean', 'Quick 20-min'],
+    dietary: ['High Protein', 'Balanced'],
+    allergies: [],
+    cookingTimeTarget: '15-20 mins',
+    preferredPartner: 'redmart'
   });
 
-  const [activeTab, setActiveTab] = React.useState<'planner' | 'cart' | 'recipes' | 'waste'>('planner');
-  const [recipes, setRecipes] = React.useState<Recipe[]>(INITIAL_RECIPES);
-  const [plannedMeals, setPlannedMeals] = React.useState<PlannedMeal[]>(() =>
-    generateDefaultPlan(preferences)
-  );
+  // Modal states
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isMealDbOpen, setIsMealDbOpen] = useState(false);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const [pantryItemIds, setPantryItemIds] = React.useState<Set<string>>(new Set());
-
-  // Modals state
-  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-  const [viewingRecipe, setViewingRecipe] = React.useState<{ recipe: Recipe; servings: number } | null>(null);
-  const [swapTargetMeal, setSwapTargetMeal] = React.useState<PlannedMeal | null>(null);
-  const [isAddRecipeOpen, setIsAddRecipeOpen] = React.useState(false);
-  const [assigningRecipe, setAssigningRecipe] = React.useState<Recipe | null>(null);
-
-  // Consolidate grocery cart
-  const groceryList = React.useMemo(() => {
-    return consolidateGroceryList(plannedMeals, preferences.pax, pantryItemIds);
-  }, [plannedMeals, preferences.pax, pantryItemIds]);
-
-  // Plan statistics
-  const stats = React.useMemo(() => {
-    return calculatePlanStats(plannedMeals, groceryList);
-  }, [plannedMeals, groceryList]);
-
-  // Handlers
-  const handleAutoGenerate = () => {
-    const freshPlan = generateDefaultPlan(preferences);
-    setPlannedMeals(freshPlan);
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
   };
 
-  const handleQuickPaxChange = (delta: number) => {
-    const newPax = Math.max(1, Math.min(6, preferences.pax + delta));
-    setPreferences(prev => ({ ...prev, pax: newPax }));
-    setPlannedMeals(prev =>
-      prev.map(m => ({
-        ...m,
-        servings: newPax,
-      }))
-    );
-  };
-
-  const handleUpdatePreferences = (updated: UserPreferences) => {
-    setPreferences(updated);
-    // If days changed, regenerate plan length
-    if (updated.plannedDays !== preferences.plannedDays) {
-      setPlannedMeals(generateDefaultPlan(updated));
-    }
-  };
-
-  const handleToggleSkipMeal = (mealId: string) => {
-    setPlannedMeals(prev =>
-      prev.map(m => (m.id === mealId ? { ...m, isSkipped: !m.isSkipped } : m))
-    );
-  };
-
-  const handleMealServingsChange = (mealId: string, newServings: number) => {
-    setPlannedMeals(prev =>
-      prev.map(m => (m.id === mealId ? { ...m, servings: newServings } : m))
-    );
-  };
-
-  const handleSwapRecipe = (mealId: string, newRecipe: Recipe) => {
-    setPlannedMeals(prev =>
-      prev.map(m => (m.id === mealId ? { ...m, recipe: newRecipe } : m))
-    );
-  };
-
-  const handleAssignToPlanDay = (dayIndex: number, newRecipe: Recipe) => {
-    setPlannedMeals(prev =>
-      prev.map(m =>
-        m.dayIndex === dayIndex ? { ...m, recipe: newRecipe, isSkipped: false } : m
-      )
-    );
-    setActiveTab('planner');
-  };
-
-  const handleToggleCheckGrocery = (itemId: string) => {
-    // We can track checked status in local UI state or mutate grocery item
-    // For local grocery item state, handled cleanly
-  };
-
-  const handleTogglePantry = (itemId: string) => {
-    setPantryItemIds(prev => {
-      const next = new Set(prev);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
-      return next;
+  // Helper function to check if ingredient is covered by current pantry
+  const isCoveredByPantry = (ingredientName: string, pantry: PantryItem[]) => {
+    const cleanIng = ingredientName.toLowerCase();
+    return pantry.some(p => {
+      if (!p.inStock) return false;
+      const cleanP = p.name.toLowerCase();
+      return cleanIng.includes(cleanP) || cleanP.includes(cleanIng);
     });
   };
 
-  const handleDeleteGroceryItem = (itemId: string) => {
-    // Marking as in pantry effectively removes it from active to-buy cart
-    handleTogglePantry(itemId);
+  // Consolidated Cart calculation engine with pantry deduplication
+  const consolidatedCart = useMemo(() => {
+    const map = new Map<string, ConsolidatedCartItem>();
+
+    recipes.forEach(recipe => {
+      recipe.ingredients.forEach(ing => {
+        const key = ing.name.toLowerCase().trim();
+        const covered = isCoveredByPantry(ing.name, pantryItems);
+
+        if (map.has(key)) {
+          const existing = map.get(key)!;
+          existing.totalQuantity += ing.quantity;
+          existing.estimatedPrice += ing.estimatedPrice;
+          if (!existing.usedInRecipes.includes(recipe.title)) {
+            existing.usedInRecipes.push(recipe.title);
+          }
+          // If already marked covered or new is covered
+          existing.coveredByPantry = existing.coveredByPantry || covered;
+        } else {
+          map.set(key, {
+            id: 'cart-' + key.replace(/\s+/g, '-'),
+            name: ing.name,
+            totalQuantity: ing.quantity,
+            unit: ing.unit,
+            aisle: ing.aisle,
+            estimatedPrice: ing.estimatedPrice,
+            usedInRecipes: [recipe.title],
+            coveredByPantry: covered,
+            quantityToBuy: covered ? 0 : ing.quantity,
+            isPurchased: false
+          });
+        }
+      });
+    });
+
+    return Array.from(map.values());
+  }, [recipes, pantryItems]);
+
+  // Derived financial metrics
+  const pantrySavings = useMemo(() => {
+    return consolidatedCart
+      .filter(item => item.coveredByPantry)
+      .reduce((sum, item) => sum + item.estimatedPrice, 0);
+  }, [consolidatedCart]);
+
+  const totalEstimatedGroceries = useMemo(() => {
+    return consolidatedCart
+      .filter(item => !item.coveredByPantry)
+      .reduce((sum, item) => sum + item.estimatedPrice, 0);
+  }, [consolidatedCart]);
+
+  const activePartner = GROCERY_PARTNERS.find(p => p.id === preferences.preferredPartner) || GROCERY_PARTNERS[0];
+  const qualifiesForFreeDelivery = totalEstimatedGroceries >= activePartner.freeDeliveryThreshold;
+  const deliveryFee = qualifiesForFreeDelivery ? 0 : activePartner.deliveryFee;
+  const grandTotal = totalEstimatedGroceries + deliveryFee;
+
+  // Recipe actions
+  const handleRemoveRecipe = (id: string) => {
+    setRecipes(prev => prev.filter(r => r.id !== id));
+    showToast('Recipe removed from weekly plan');
   };
 
-  const handleAddCustomGrocery = (item: {
-    name: string;
-    amount: number;
-    unit: string;
-    category: GroceryCategory;
-    price: number;
-  }) => {
-    // Add custom ingredient directly
-    alert(`Added "${item.name} (${item.amount} ${item.unit})" to ${item.category}`);
+  const handleReplaceRecipe = async (id: string) => {
+    const otherRecipes = INITIAL_RECIPES.filter(r => r.id !== id);
+    if (otherRecipes.length > 0) {
+      const replacement = otherRecipes[Math.floor(Math.random() * otherRecipes.length)];
+      setRecipes(prev => prev.map(r => (r.id === id ? { ...replacement, id: 'rec-' + Date.now() } : r)));
+      showToast('Recipe swapped with alternative');
+    }
   };
 
-  const handleAddNewRecipe = (newRecipe: Recipe) => {
+  const handleAddParsedRecipe = (newRecipe: Recipe) => {
     setRecipes(prev => [newRecipe, ...prev]);
-    // Also offer to put in plan or auto-select
-    setAssigningRecipe(newRecipe);
+    showToast(`Added "${newRecipe.title}" to weekly meals!`);
+  };
+
+  // Pantry actions
+  const handleTogglePantryInStock = (id: string) => {
+    setPantryItems(prev =>
+      prev.map(item => (item.id === id ? { ...item, inStock: !item.inStock } : item))
+    );
+  };
+
+  const handleAddPantryItem = (itemData: Omit<PantryItem, 'id'>) => {
+    const newItem: PantryItem = {
+      ...itemData,
+      id: 'pantry-' + Date.now()
+    };
+    setPantryItems(prev => [newItem, ...prev]);
+    showToast(`Added "${newItem.name}" to your pantry stock`);
+  };
+
+  const handleRemovePantryItem = (id: string) => {
+    setPantryItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  // Cart actions
+  const handleToggleCartItemPurchased = (id: string) => {
+    // In our consolidated state, toggle in place
+    // We can maintain a set of checked items
+    const item = consolidatedCart.find(i => i.id === id);
+    if (item) {
+      item.isPurchased = !item.isPurchased;
+      // Force rerender
+      setRecipes(prev => [...prev]);
+    }
+  };
+
+  const handleToggleCartPantryOverride = (id: string) => {
+    const item = consolidatedCart.find(i => i.id === id);
+    if (item) {
+      // Find if there's a corresponding pantry item
+      const matchingPantry = pantryItems.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+      if (matchingPantry) {
+        handleTogglePantryInStock(matchingPantry.id);
+      } else {
+        // Add to pantry
+        handleAddPantryItem({
+          name: item.name,
+          category: item.aisle,
+          inStock: !item.coveredByPantry,
+          quantityRemaining: 'Available'
+        });
+      }
+    }
+  };
+
+  const handleRemoveCartItem = (id: string) => {
+    const item = consolidatedCart.find(i => i.id === id);
+    if (!item) return;
+    // Remove ingredient from all recipes
+    setRecipes(prev =>
+      prev.map(rec => ({
+        ...rec,
+        ingredients: rec.ingredients.filter(ing => ing.name.toLowerCase().trim() !== item.name.toLowerCase().trim())
+      }))
+    );
+    showToast(`Removed "${item.name}" from shopping list`);
+  };
+
+  // AI Meal Plan Generator
+  const handleGeneratePlan = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/generate-meal-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          days: preferences.days,
+          pax: preferences.pax,
+          budget: preferences.budget,
+          currency: preferences.currency,
+          cuisines: preferences.cuisines,
+          dietary: preferences.dietary,
+          allergies: preferences.allergies
+        })
+      });
+
+      const data = await response.json();
+      if (data.plan && data.plan.recipes) {
+        setRecipes(data.plan.recipes);
+        showToast(`Synthesized ${data.plan.recipes.length}-day meal plan optimized for your budget!`);
+      } else {
+        throw new Error(data.warning || 'Failed to generate plan');
+      }
+    } catch (err: any) {
+      console.error('Plan generation failed:', err);
+      showToast('Loaded curated weeknight meal plan');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col font-['Plus_Jakarta_Sans',sans-serif]">
-      {/* Navigation Top Bar */}
-      <Header
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 flex flex-col font-sans">
+      {/* Toast Alert */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-neutral-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg border border-neutral-700 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toast}</span>
+        </div>
+      )}
+
+      {/* Navigation Header */}
+      <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        cartItemCount={groceryList.filter(i => !i.isInPantry).length}
-        onOpenProfile={() => setIsProfileOpen(true)}
-        onAutoGenerate={handleAutoGenerate}
+        cartItemCount={consolidatedCart.filter(i => !i.coveredByPantry).length}
+        onOpenUpload={() => setIsUploadOpen(true)}
+        onOpenMealDb={() => setIsMealDbOpen(true)}
+        onOpenPreferences={() => setIsPreferencesOpen(true)}
+        onGeneratePlan={handleGeneratePlan}
+        isGenerating={isGenerating}
       />
 
-      {/* Household Setup & Quick Indicator Bar */}
-      <ProfileBar
-        preferences={preferences}
-        onOpenProfile={() => setIsProfileOpen(true)}
-        estimatedGroceryTotal={stats.estimatedGroceryTotal}
-        wasteSavingsAmount={stats.wasteSavingsAmount}
-        sharedIngredientsCount={stats.sharedIngredientsCount}
-        onQuickPaxChange={handleQuickPaxChange}
-      />
-
-      {/* Main Viewport Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Content Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {activeTab === 'planner' && (
           <MealPlanner
-            plannedMeals={plannedMeals}
+            recipes={recipes}
             preferences={preferences}
-            onViewRecipe={(recipe, servings) => setViewingRecipe({ recipe, servings })}
-            onSwapClick={meal => setSwapTargetMeal(meal)}
-            onServingsChange={handleMealServingsChange}
-            onToggleSkip={handleToggleSkipMeal}
-            onOpenAddRecipe={() => setIsAddRecipeOpen(true)}
-            onAutoGenerate={handleAutoGenerate}
+            onUpdatePreferences={(updates) => setPreferences(prev => ({ ...prev, ...updates }))}
+            partners={GROCERY_PARTNERS}
+            onRemoveRecipe={handleRemoveRecipe}
+            onReplaceRecipe={handleReplaceRecipe}
+            onOpenUpload={() => setIsUploadOpen(true)}
+            onOpenMealDb={() => setIsMealDbOpen(true)}
+            onGeneratePlan={handleGeneratePlan}
+            isGenerating={isGenerating}
+            onNavigateToCart={() => setActiveTab('cart')}
+            totalEstimatedGroceries={totalEstimatedGroceries}
+            pantrySavings={pantrySavings}
           />
         )}
 
         {activeTab === 'cart' && (
-          <GroceryCart
-            groceryList={groceryList}
-            preferences={preferences}
-            onToggleCheck={handleToggleCheckGrocery}
-            onTogglePantry={handleTogglePantry}
-            onDeleteItem={handleDeleteGroceryItem}
-            onAddItem={handleAddCustomGrocery}
-            onGrocerSelect={grocer => setPreferences(prev => ({ ...prev, preferredGrocer: grocer }))}
+          <SmartCart
+            cartItems={consolidatedCart}
+            partners={GROCERY_PARTNERS}
+            selectedPartnerId={preferences.preferredPartner}
+            onSelectPartner={(partnerId) => setPreferences(prev => ({ ...prev, preferredPartner: partnerId }))}
+            onToggleItemPurchased={handleToggleCartItemPurchased}
+            onTogglePantryOverride={handleToggleCartPantryOverride}
+            onRemoveCartItem={handleRemoveCartItem}
+            onOpenCheckoutModal={() => setIsCheckoutOpen(true)}
+            pantrySavings={pantrySavings}
           />
         )}
 
-        {activeTab === 'recipes' && (
-          <RecipeBox
-            recipes={recipes}
-            onViewRecipe={recipe => setViewingRecipe({ recipe, servings: preferences.pax })}
-            onOpenAddRecipe={() => setIsAddRecipeOpen(true)}
-            onAssignToPlan={recipe => setAssigningRecipe(recipe)}
+        {activeTab === 'pantry' && (
+          <PantryManager
+            pantryItems={pantryItems}
+            onToggleInStock={handleTogglePantryInStock}
+            onAddPantryItem={handleAddPantryItem}
+            onRemovePantryItem={handleRemovePantryItem}
+            pantrySavings={pantrySavings}
           />
         )}
 
-        {activeTab === 'waste' && (
-          <WasteAndBudgetPanel
-            plannedMeals={plannedMeals}
-            groceryList={groceryList}
-            preferences={preferences}
-            onOpenProfile={() => setIsProfileOpen(true)}
-            onAutoOptimize={handleAutoGenerate}
+        {activeTab === 'canvas' && (
+          <CanvasInsightsModal
+            onSwitchToPlanner={() => setActiveTab('planner')}
           />
         )}
       </main>
 
       {/* Modals */}
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
+      <RecipeUploadModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onAddParsedRecipe={handleAddParsedRecipe}
+      />
+
+      <MealDbExplorerModal
+        isOpen={isMealDbOpen}
+        onClose={() => setIsMealDbOpen(false)}
+        onImportRecipe={handleAddParsedRecipe}
+      />
+
+      <PreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
         preferences={preferences}
-        onSave={handleUpdatePreferences}
-      />
-
-      <RecipeModal
-        recipe={viewingRecipe?.recipe || null}
-        servings={viewingRecipe?.servings || preferences.pax}
-        onClose={() => setViewingRecipe(null)}
-        onServingsChange={newServings => {
-          if (viewingRecipe) {
-            setViewingRecipe({ ...viewingRecipe, servings: newServings });
-          }
+        onSave={(updated) => {
+          setPreferences(updated);
+          showToast('Profile preferences updated');
         }}
-        onSwapRequest={() => {
-          if (viewingRecipe) {
-            const matchMeal = plannedMeals.find(m => m.recipe.id === viewingRecipe.recipe.id);
-            if (matchMeal) {
-              setSwapTargetMeal(matchMeal);
-            }
-          }
-        }}
+        partners={GROCERY_PARTNERS}
       />
 
-      <SwapRecipeModal
-        isOpen={swapTargetMeal !== null}
-        onClose={() => setSwapTargetMeal(null)}
-        targetMeal={swapTargetMeal}
-        allPlannedMeals={plannedMeals}
-        onSelectRecipe={handleSwapRecipe}
+      <PartnerCheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        cartItems={consolidatedCart}
+        partner={activePartner}
+        subtotal={totalEstimatedGroceries}
+        deliveryFee={deliveryFee}
+        grandTotal={grandTotal}
       />
 
-      <AddRecipeModal
-        isOpen={isAddRecipeOpen}
-        onClose={() => setIsAddRecipeOpen(false)}
-        onAddRecipe={handleAddNewRecipe}
-      />
-
-      <AssignMealModal
-        isOpen={assigningRecipe !== null}
-        onClose={() => setAssigningRecipe(null)}
-        recipe={assigningRecipe}
-        plannedMeals={plannedMeals}
-        onAssign={handleAssignToPlanDay}
-      />
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-neutral-200 py-6 mt-12">
+      {/* Quiet Footer */}
+      <footer className="border-t border-neutral-200 bg-white py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-neutral-900">Mise</span>
-            <span>· Weekly meal planner and grocery cart automation</span>
+            <span className="font-semibold text-neutral-800">PrepCart AI</span>
+            <span>·</span>
+            <span>Intelligent Weekly Meal Planner & Grocer Dispatch</span>
           </div>
 
           <div className="flex items-center gap-6">
-            <span>Instant & Scheduled Grocers: GrabMart, RedMart, FoodPanda, FairPrice, Amazon</span>
+            <button onClick={() => setActiveTab('planner')} className="hover:text-neutral-900 transition-colors">
+              Planner
+            </button>
+            <button onClick={() => setActiveTab('cart')} className="hover:text-neutral-900 transition-colors">
+              Smart Cart
+            </button>
+            <button onClick={() => setActiveTab('pantry')} className="hover:text-neutral-900 transition-colors">
+              Pantry Inventory
+            </button>
+            <button onClick={() => setActiveTab('canvas')} className="hover:text-neutral-900 transition-colors">
+              Canvas Specs
+            </button>
           </div>
         </div>
       </footer>

@@ -66,3 +66,41 @@ This document records the prompts and instructions used during the development o
 
 **Actions Taken:**
 - Created `prompts.md` documenting all chronological user prompts, parameters, and executed actions.
+
+---
+
+## Prompt 5: PDF Canvas Implementation & TheMealDB Serverless Integration
+
+**User Request:**
+> build me an application with attached pdf. let me know any missing info you need to build it.
+> add a serverless connection that pulls data from this keyless API: https://www.themealdb.com/api/json/v1/1/filter.php?i=chicken_breast
+
+**Actions Taken:**
+- Built full PrepCart AI meal planning and automated grocer dispatch application implementing all 9 slides from the Business Model Canvas.
+- Integrated serverless proxy endpoints for TheMealDB keyless API (`/api/meals/filter` and `/api/meals/detail/:id`) with automatic ingredient/unit parsing and aisle classification.
+- Created `MealDbExplorerModal.tsx` for real-time browsing and 1-click importing of meals into weekly grocery carts.
+- Pushed to `https://github.com/coniecchin/meal-planner.git`.
+
+---
+
+## Prompt 6: Image Loading Fix
+
+**User Request:**
+> images aren't showing, fix it.
+
+**Actions Taken:**
+- Resolved image path resolution for Vite production builds by creating centralized asset module `src/assets/images.ts` and `resolveImageUrl` resolver.
+- Placed image assets into `public/images/` and mounted static Express handlers in `server.ts` for `/images` and `/src/assets/images`.
+- Replaced fragile DOM-collapsing error handlers in `RecipeCard.tsx` with resilient styled fallbacks.
+
+---
+
+## Prompt 7: GitHub Push to coniec Branch
+
+**User Request:**
+> Git push [REDACTED_GITHUB_PAT] @ https://github.com/kittokurrency/Weekly-Meal-Planner.git.coniec
+
+**Actions Taken:**
+- Synced codebase with remote `coniec` branch on `https://github.com/kittokurrency/Weekly-Meal-Planner.git`.
+- Pushed all application updates, assets, serverless connections, and documentation.
+
