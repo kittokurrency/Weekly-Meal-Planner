@@ -3,6 +3,35 @@ import { Recipe } from '../types';
 import salmonBowlImg from '../assets/images/recipe_salmon_bowl_1792051278540.jpg';
 import tuscanPastaImg from '../assets/images/recipe_tuscan_pasta_1792051280688.jpg';
 import quinoaSaladImg from '../assets/images/recipe_quinoa_salad_1792051278765.jpg';
+import beefBroccoliImg from '../assets/images/beef_broccoli_stirfry_1792055884680.jpg';
+import chickenTingaImg from '../assets/images/chicken_tinga_bowl_1792055885889.jpg';
+import lemonBarramundiImg from '../assets/images/lemon_barramundi_dish_1792055885728.jpg';
+import tofuCurryImg from '../assets/images/japanese_tofu_curry_1792055886516.jpg';
+import greekGyroImg from '../assets/images/greek_chicken_gyro_1792055886545.jpg';
+
+export const COPYRIGHT_FREE_PHOTOS = {
+  salmonBowl: salmonBowlImg,
+  tuscanPasta: tuscanPastaImg,
+  quinoaSalad: quinoaSaladImg,
+  beefBroccoli: beefBroccoliImg,
+  chickenTinga: chickenTingaImg,
+  lemonBarramundi: lemonBarramundiImg,
+  tofuCurry: tofuCurryImg,
+  greekGyro: greekGyroImg,
+};
+
+export function getCopyrightFreeMealPhoto(titleOrIngredient: string): string {
+  const text = titleOrIngredient.toLowerCase();
+  if (text.includes('salmon')) return salmonBowlImg;
+  if (text.includes('barramundi') || text.includes('fish') || text.includes('seafood') || text.includes('shrimp') || text.includes('tuna')) return lemonBarramundiImg;
+  if (text.includes('beef') || text.includes('steak') || text.includes('stir fry') || text.includes('pork')) return beefBroccoliImg;
+  if (text.includes('pasta') || text.includes('penne') || text.includes('spaghetti') || text.includes('italian')) return tuscanPastaImg;
+  if (text.includes('curry') || text.includes('tofu') || text.includes('edamame') || text.includes('japanese')) return tofuCurryImg;
+  if (text.includes('gyro') || text.includes('greek') || text.includes('skewer') || text.includes('tzatziki')) return greekGyroImg;
+  if (text.includes('quinoa') || text.includes('salad') || text.includes('chickpea') || text.includes('vegetarian')) return quinoaSaladImg;
+  if (text.includes('tinga') || text.includes('mexican') || text.includes('taco') || text.includes('chicken')) return chickenTingaImg;
+  return chickenTingaImg;
+}
 
 export const INITIAL_RECIPES: Recipe[] = [
   {
@@ -122,7 +151,7 @@ export const INITIAL_RECIPES: Recipe[] = [
     fatGrams: 22,
     costPerServing: 6.20,
     keyPerishable: 'Fresh Broccoli',
-    imageUrl: salmonBowlImg,
+    imageUrl: beefBroccoliImg,
     ingredients: [
       { id: 'ing-22', name: 'Flank Steak or Sirloin', amount: 300, unit: 'g', category: 'Meat & Seafood', estimatedPrice: 6.50 },
       { id: 'ing-23', name: 'Fresh Broccoli', amount: 250, unit: 'g', category: 'Produce & Herbs', estimatedPrice: 1.80 },
@@ -155,7 +184,7 @@ export const INITIAL_RECIPES: Recipe[] = [
     fatGrams: 14,
     costPerServing: 4.80,
     keyPerishable: 'Avocado',
-    imageUrl: tuscanPastaImg,
+    imageUrl: chickenTingaImg,
     ingredients: [
       { id: 'ing-28', name: 'Chicken Breast', amount: 350, unit: 'g', category: 'Meat & Seafood', estimatedPrice: 4.80 },
       { id: 'ing-29', name: 'Cherry Tomatoes', amount: 150, unit: 'g', category: 'Produce & Herbs', estimatedPrice: 1.60 },
@@ -188,7 +217,7 @@ export const INITIAL_RECIPES: Recipe[] = [
     fatGrams: 24,
     costPerServing: 6.40,
     keyPerishable: 'Baby Spinach',
-    imageUrl: salmonBowlImg,
+    imageUrl: lemonBarramundiImg,
     ingredients: [
       { id: 'ing-35', name: 'Barramundi Fillets', amount: 320, unit: 'g', category: 'Meat & Seafood', estimatedPrice: 7.20 },
       { id: 'ing-36', name: 'Baby Spinach', amount: 200, unit: 'g', category: 'Produce & Herbs', estimatedPrice: 2.40 },
@@ -221,7 +250,7 @@ export const INITIAL_RECIPES: Recipe[] = [
     fatGrams: 16,
     costPerServing: 3.80,
     keyPerishable: 'Shelled Edamame',
-    imageUrl: quinoaSaladImg,
+    imageUrl: tofuCurryImg,
     ingredients: [
       { id: 'ing-41', name: 'Extra Firm Tofu', amount: 300, unit: 'g', category: 'Produce & Herbs', estimatedPrice: 1.80 },
       { id: 'ing-42', name: 'Shelled Edamame', amount: 100, unit: 'g', category: 'Produce & Herbs', estimatedPrice: 1.40 },
@@ -254,7 +283,7 @@ export const INITIAL_RECIPES: Recipe[] = [
     fatGrams: 20,
     costPerServing: 5.10,
     keyPerishable: 'Cherry Tomatoes',
-    imageUrl: tuscanPastaImg,
+    imageUrl: greekGyroImg,
     ingredients: [
       { id: 'ing-47', name: 'Chicken Thigh or Breast', amount: 350, unit: 'g', category: 'Meat & Seafood', estimatedPrice: 4.80 },
       { id: 'ing-48', name: 'Greek Yogurt', amount: 150, unit: 'g', category: 'Dairy & Refrigerated', estimatedPrice: 1.60 },

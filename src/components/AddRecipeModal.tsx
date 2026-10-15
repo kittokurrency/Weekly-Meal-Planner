@@ -1,7 +1,7 @@
 import React from 'react';
 import { CuisineType, DietaryRestriction, Ingredient, Recipe } from '../types';
-import { X, Upload, Plus, FileText, CheckCircle2, Sparkles } from 'lucide-react';
-import salmonBowlImg from '../assets/images/recipe_salmon_bowl_1792051278540.jpg';
+import { X, Upload, Plus, FileText, CheckCircle2, Sparkles, ShieldCheck } from 'lucide-react';
+import { getCopyrightFreeMealPhoto, COPYRIGHT_FREE_PHOTOS } from '../data/recipes';
 
 interface AddRecipeModalProps {
   isOpen: boolean;
@@ -43,6 +43,7 @@ Instructions:
   const [servings, setServings] = React.useState(2);
   const [ingredientsText, setIngredientsText] = React.useState('');
   const [instructionsText, setInstructionsText] = React.useState('');
+  const [selectedPhoto, setSelectedPhoto] = React.useState<string>('');
 
   if (!isOpen) return null;
 
@@ -149,7 +150,7 @@ Instructions:
       carbsGrams: 45,
       fatGrams: 18,
       costPerServing: Math.round((totalEst / parsedServings) * 100) / 100 || 5.00,
-      imageUrl: salmonBowlImg,
+      imageUrl: selectedPhoto || getCopyrightFreeMealPhoto(parsedTitle),
       ingredients: parsedIngredients.length > 0 ? parsedIngredients : [
         { id: 'custom-1', name: 'Fresh Vegetables', amount: 250, unit: 'g', category: 'Produce & Herbs', estimatedPrice: 2.0 },
         { id: 'custom-2', name: 'Protein of choice', amount: 350, unit: 'g', category: 'Meat & Seafood', estimatedPrice: 5.0 },
@@ -215,6 +216,47 @@ Instructions:
             <p className="text-[11px] text-neutral-500 mt-1">
               Supports grams (g), milliliters (ml), pieces (pc), cloves, cans. Mise calculates consolidated weights to reduce surplus purchases.
             </p>
+          </div>
+
+          {/* Copyright-Free Photo Selector */}
+          <div className="pt-2 border-t border-neutral-100">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Verified Copyright-Free Photo</span>
+              </label>
+              <span className="text-[10px] text-neutral-500">Auto-matched from title or select below</span>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {Object.entries(COPYRIGHT_FREE_PHOTOS).map(([key, photo]) => {
+                const isSelected = selectedPhoto === photo;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSelectedPhoto(photo)}
+                    className={`relative rounded-lg overflow-hidden h-14 border-2 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-emerald-600 ring-2 ring-emerald-500/30'
+                        : 'border-transparent hover:border-neutral-300 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <img
+                      src={photo}
+                      alt={key}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-emerald-900/30 flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-white drop-shadow-md" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

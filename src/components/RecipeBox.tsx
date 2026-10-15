@@ -1,6 +1,7 @@
 import React from 'react';
 import { CuisineType, DietaryRestriction, Recipe } from '../types';
-import { Clock, Flame, DollarSign, Plus, Eye, Sparkles, Search, Leaf } from 'lucide-react';
+import { Clock, Flame, DollarSign, Plus, Eye, Sparkles, Search, Leaf, ShieldCheck } from 'lucide-react';
+import { getCopyrightFreeMealPhoto } from '../data/recipes';
 
 interface RecipeBoxProps {
   recipes: Recipe[];
@@ -62,7 +63,7 @@ export const RecipeBox: React.FC<RecipeBoxProps> = ({
       carbsGrams: 35,
       fatGrams: 16,
       costPerServing: 5.50,
-      imageUrl: m.strMealThumb,
+      imageUrl: getCopyrightFreeMealPhoto(m.strMeal),
       keyPerishable: 'Chicken Breast',
       ingredients: [
         { id: `ing-${m.idMeal}-1`, name: 'Chicken Breast', amount: 350, unit: 'g', category: 'Meat & Seafood', estimatedPrice: 4.80 },
@@ -111,9 +112,15 @@ export const RecipeBox: React.FC<RecipeBoxProps> = ({
             <h1 className="text-lg font-bold text-neutral-900 tracking-tight">
               Recipe Library & Smart Discovery
             </h1>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              Curated quick, fuss-free dinners designed to share ingredients and reduce food waste.
-            </p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+              <p className="text-xs text-neutral-500">
+                Curated quick, fuss-free dinners designed to share ingredients and reduce food waste.
+              </p>
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <span>100% Copyright-Free Photos</span>
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -254,11 +261,15 @@ export const RecipeBox: React.FC<RecipeBoxProps> = ({
                 >
                   <div className="relative h-44 bg-neutral-100 overflow-hidden">
                     <img
-                      src={m.strMealThumb}
+                      src={getCopyrightFreeMealPhoto(m.strMeal)}
                       alt={m.strMeal}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                     />
+                    <div className="absolute top-2 left-2 bg-emerald-800/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow-xs flex items-center gap-1 backdrop-blur-xs">
+                      <ShieldCheck className="w-3 h-3 text-emerald-300" />
+                      <span>Copyright-Free Photo</span>
+                    </div>
                     <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-mono px-2 py-0.5 rounded backdrop-blur-xs">
                       ID: {m.idMeal}
                     </div>
@@ -315,6 +326,11 @@ export const RecipeBox: React.FC<RecipeBoxProps> = ({
                   <div className="absolute top-2 left-2 bg-emerald-800/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow-xs flex items-center gap-1 backdrop-blur-xs">
                     <Leaf className="w-3 h-3" />
                     <span>Key: {recipe.keyPerishable}</span>
+                  </div>
+
+                  <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded shadow-xs flex items-center gap-1 backdrop-blur-xs">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    <span>Copyright-Free</span>
                   </div>
 
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-mono px-2 py-0.5 rounded backdrop-blur-xs">

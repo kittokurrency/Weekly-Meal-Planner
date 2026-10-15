@@ -1,7 +1,7 @@
 import React from 'react';
 import { Recipe, PlannedMeal } from '../types';
 import { INITIAL_RECIPES } from '../data/recipes';
-import { X, Clock, DollarSign, Leaf, Sparkles } from 'lucide-react';
+import { X, Clock, DollarSign, Leaf, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface SwapRecipeModalProps {
   isOpen: boolean;
@@ -123,6 +123,10 @@ export const SwapRecipeModal: React.FC<SwapRecipeModalProps> = ({
                       <span>Zero-Waste Synergy</span>
                     </div>
                   )}
+                  <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded shadow-xs flex items-center gap-1 backdrop-blur-xs">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    <span>Copyright-Free</span>
+                  </div>
                 </div>
 
                 <div className="p-4 flex-1 flex flex-col justify-between">

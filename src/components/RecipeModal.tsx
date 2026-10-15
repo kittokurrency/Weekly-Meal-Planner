@@ -1,6 +1,6 @@
 import React from 'react';
 import { Recipe } from '../types';
-import { X, Clock, Flame, DollarSign, Users, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Clock, Flame, DollarSign, Users, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface RecipeModalProps {
   recipe: Recipe | null;
@@ -36,6 +36,11 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
           
+          <div className="absolute top-4 left-6 bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-white/10 shadow-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Copyright-Free Authentic Photo</span>
+          </div>
+
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors cursor-pointer"
